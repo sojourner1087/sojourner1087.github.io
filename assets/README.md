@@ -1,7 +1,17 @@
 # Bramble artwork
 
+## Current website image
+
+`bramble-realistic.png` is an AI-generated photorealistic image created with the built-in image generation tool. The user's reference photo was supplied as an appearance reference for the short fuzzy coat, small proportions, black-and-white markings, sideways ears, and stern expression. The website displays the new generated image, not the supplied photo.
+
+### Realistic image prompt
+
+Use case: photorealistic-natural. Asset type: square hero photograph for an existing website about a grumpy little black-and-white sheep. The attached photo is an APPEARANCE REFERENCE only. Generate a new, highly realistic photograph of a young animal closely matching that reference, not a screenshot reproduction. Match the reference's compact small body, short fine fluffy fur, broad white forehead and central white face blaze down to the nose, irregular large black patches around both eyes and cheeks, mostly black sideways-pointing long triangular ears, tiny mottled black nose, black patches around the shoulders and chest, white belly and predominantly dark lower legs and hooves. The face should resemble this particular reference animal, with small natural slightly narrowed eyes and a quietly stern, unimpressed look. No exaggerated human eyebrows, no cartoon face. It should look like the same kind of little animal as the reference, NOT an adult ram with a huge round curly wool body. Full body facing camera, looking at viewer, ears and all visible feet comfortably inside frame; natural animal anatomy. Setting: a sunlit rural patch of dry straw and meadow grass, warm late-afternoon light from one side, softly blurred simple countryside background. Portrait captured at the animal's eye level with a professional camera and 85mm lens, crisp detailed individual hairs, subtle natural film colors, true-to-life photographic texture and shadows. Animal fills roughly 75 percent of a square composition, centered, with some breathing room above its ears. Preserve asymmetric black and white markings and small young proportions. Absolutely photorealistic, no painting, gouache, illustration, drawing, CGI, plastic fur or stylized rendering. No horns. No text, no social media interface, no hearts, arrows, icons, borders, watermarks, or logos.
+
+## Previous illustration
+
 `bramble-the-sheep.png` is an original AI-generated raster illustration created with the built-in image generation tool. The user's reference photo inspired the grumpy character concept; the photo itself is not included in the website.
 
-## Generation prompt
+### Illustration prompt
 
 Use case: illustration-story. Asset type: original raster hero illustration for a whimsical website about an angry sheep called BAA HUMBUG. Create from scratch a charming, very grumpy small black-and-white sheep, huge round fluffy cream wool body, tiny sturdy black legs, black face with cream forehead tuft, furrowed brow and suspicious narrowed eyes, ears sticking sideways. Stylish tactile hand-painted gouache and colored-pencil editorial illustration, vintage countryside picture-book meets modern independent magazine. Full sheep body large and centered, standing in a simple moss-green rolling pasture with a few tiny butter-yellow wildflowers and a warm ivory sky. Subtle paper grain, expressive brush textures, lovely imperfect edges. Warm forest green, butter yellow, ivory and charcoal palette. Square composition, sheep occupies 70 percent of frame, ample margin so all ears and hooves visible. The sheep is comically unimpressed but endearing, not scary. Original artwork, not a photo recreation. No text, no lettering, no logos, no border, no watermark, no interface elements.
