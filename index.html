@@ -7,7 +7,7 @@
   <title>Digital Rain</title>
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-    canvas { display: block; width: 100%; height: 100%; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     noscript { position: fixed; inset: 0; display: grid; place-items: center; color: #43ff83; font-family: monospace; }
   </style>
@@ -22,6 +22,9 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789';
     const cell = 22;
+    const pointer = { active: false, id: null, x: 0, y: 0 };
+    const pushRadius = 120;
+    const pushStrength = 42;
     let width, height, streams;
     let animation = null;
     let previousTime = 0;
@@ -33,8 +36,54 @@
         head: scattered ? Math.random() * (height / cell + 20) : -Math.random() * 30,
         speed: 7 + Math.random() * 13,
         length: 10 + Math.floor(Math.random() * 22),
-        glyphs: Array.from({ length: 34 }, randomCharacter)
+        glyphs: Array.from({ length: 34 }, randomCharacter),
+        displacements: new Map()
       };
+    }
+
+    function movePointer(event) {
+      if (reducedMotion.matches || event.isPrimary === false) return;
+      if (event.pointerType !== 'mouse' && pointer.id !== event.pointerId) return;
+      const bounds = canvas.getBoundingClientRect();
+      pointer.x = event.clientX - bounds.left;
+      pointer.y = event.clientY - bounds.top;
+      pointer.active = true;
+    }
+
+    function clearPointer() {
+      pointer.active = false;
+      pointer.id = null;
+    }
+
+    function displace(stream, row, x, y, delta) {
+      let targetX = 0;
+      let targetY = 0;
+      if (pointer.active && !reducedMotion.matches) {
+        const dx = x + cell / 2 - pointer.x;
+        const dy = y + cell / 2 - pointer.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < pushRadius) {
+          const force = pushStrength * Math.pow(1 - distance / pushRadius, 2);
+          // A character directly under the pointer still needs a direction to move.
+          targetX = (distance > 0.01 ? dx / distance : 1) * force;
+          targetY = (distance > 0.01 ? dy / distance : 0) * force;
+        }
+      }
+      let offset = stream.displacements.get(row);
+      if (!offset && targetX === 0 && targetY === 0) return { x: 0, y: 0 };
+      if (!offset) {
+        offset = { x: 0, y: 0 };
+        stream.displacements.set(row, offset);
+      }
+      // Time-based easing keeps both the push and the return smooth at any frame rate.
+      const easing = 1 - Math.exp(-10 * delta);
+      offset.x += (targetX - offset.x) * easing;
+      offset.y += (targetY - offset.y) * easing;
+      if (targetX === 0 && targetY === 0 && Math.hypot(offset.x, offset.y) < 0.05) {
+        stream.displacements.delete(row);
+        return { x: 0, y: 0 };
+      }
+      return offset;
     }
 
     function draw(delta) {
@@ -51,15 +100,21 @@
         if (delta > 0 && Math.random() < delta * 12) {
           stream.glyphs[Math.floor(Math.random() * stream.glyphs.length)] = randomCharacter();
         }
+        const headRow = Math.floor(stream.head);
+        for (const row of stream.displacements.keys()) {
+          if (row > headRow || row <= headRow - stream.length) stream.displacements.delete(row);
+        }
         for (let offset = stream.length - 1; offset >= 0; offset--) {
-          const row = Math.floor(stream.head) - offset;
+          const row = headRow - offset;
           const y = row * cell;
           if (y < -cell || y > height) continue;
+          const x = column * cell;
+          const displacement = displace(stream, row, x, y, delta);
           context.shadowColor = '#43ff83';
           context.shadowBlur = offset === 0 ? 8 : 0;
           context.fillStyle = offset === 0 ? '#caffdc' : `rgba(0, 245, 90, ${Math.pow(1 - offset / stream.length, 1.7) * 0.85})`;
           const glyph = stream.glyphs[((row % stream.glyphs.length) + stream.glyphs.length) % stream.glyphs.length];
-          context.fillText(glyph, column * cell, y);
+          context.fillText(glyph, x + displacement.x, y + displacement.y);
         }
       });
     }
@@ -75,10 +130,12 @@
       cancelAnimationFrame(animation);
       animation = null;
       previousTime = 0;
+      if (document.hidden || reducedMotion.matches) clearPointer();
       if (!reducedMotion.matches && !document.hidden) animation = requestAnimationFrame(frame);
     }
 
     function resize() {
+      clearPointer();
       width = window.innerWidth;
       height = window.innerHeight;
       const scale = Math.min(window.devicePixelRatio || 1, 2);
@@ -89,6 +146,26 @@
       draw(0);
     }
 
+    canvas.addEventListener('pointerdown', event => {
+      if (reducedMotion.matches || event.isPrimary === false) return;
+      pointer.id = event.pointerId;
+      if (event.pointerType !== 'mouse') canvas.setPointerCapture(event.pointerId);
+      movePointer(event);
+    });
+    canvas.addEventListener('pointermove', movePointer);
+    canvas.addEventListener('pointerleave', event => {
+      if (event.pointerType === 'mouse') clearPointer();
+    });
+    canvas.addEventListener('pointerup', event => {
+      if (event.pointerId === pointer.id && event.pointerType !== 'mouse') clearPointer();
+    });
+    canvas.addEventListener('pointercancel', event => {
+      if (event.pointerId === pointer.id || event.pointerType === 'mouse') clearPointer();
+    });
+    canvas.addEventListener('lostpointercapture', event => {
+      if (event.pointerId === pointer.id) clearPointer();
+    });
+    window.addEventListener('blur', clearPointer);
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', syncAnimation);
     reducedMotion.addEventListener('change', () => { resize(); syncAnimation(); });
