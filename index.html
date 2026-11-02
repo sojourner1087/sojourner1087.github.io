@@ -3,174 +3,177 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#000000">
-  <title>Digital Rain</title>
+  <meta name="theme-color" content="#f5f2e5">
+  <meta name="description" content="Meet Bramble. A small sheep with big feelings, strict pasture rules, and absolutely no time for your nonsense.">
+  <title>Baa Humbug — Small sheep. Big feelings.</title>
+  <link rel="icon" href="data:,">
   <style>
-    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    noscript { position: fixed; inset: 0; display: grid; place-items: center; color: #43ff83; font-family: monospace; }
+    :root { --paper: #f5f2e5; --ink: #293e30; --muted: #5a6655; --yellow: #eed173; --line: #c9cdb9; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 Arial, Helvetica, sans-serif; }
+    a { color: inherit; text-decoration: none; }
+    a, button { -webkit-tap-highlight-color: transparent; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 6px; }
+    ::selection { background: var(--yellow); color: var(--ink); }
+    .wrap { width: min(1180px, calc(100% - 80px)); margin-inline: auto; }
+    .eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .skip { position: absolute; top: -100px; left: 16px; padding: 12px; background: var(--yellow); z-index: 10; }
+    .skip:focus { top: 12px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 100px; border-bottom: 1px solid var(--line); }
+    .brand { font: bold 25px Georgia, 'Times New Roman', serif; letter-spacing: -.06em; }
+    .brand span { display: inline-block; margin-right: 8px; font-size: 32px; vertical-align: middle; }
+    nav { display: flex; align-items: center; gap: 32px; font-size: 12px; font-weight: 700; }
+    nav a { padding-block: 8px; }
+    nav a:hover { text-decoration: underline; text-underline-offset: 5px; }
+    .nav-cta { border-bottom: 1px solid var(--ink); }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 52px; padding-block: 68px 64px; }
+    .hero-copy { padding-bottom: 12px; }
+    .hero .eyebrow { display: flex; align-items: center; gap: 10px; }
+    .dot { width: 7px; height: 7px; display: inline-block; background: var(--ink); border-radius: 50%; }
+    h1 { font: normal clamp(64px, 7.8vw, 105px)/.97 Georgia, 'Times New Roman', serif; letter-spacing: -.065em; margin: 28px 0; }
+    h1 em { font-weight: normal; }
+    .intro { max-width: 370px; margin: 0 0 30px; color: var(--muted); font-size: 17px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 22px; padding: 15px 23px; border: 1px solid var(--ink); border-radius: 5px; background: var(--yellow); color: var(--ink); font: bold 13px/1.5 Arial, sans-serif; cursor: pointer; transition: transform .2s, box-shadow .2s, background .2s; }
+    .button:hover { transform: translateY(-3px); box-shadow: 3px 4px 0 var(--ink); }
+    .hero-note { display: block; margin-top: 15px; font-size: 11px; color: var(--muted); }
+    .portrait { position: relative; margin: 0; padding: 0 12px; }
+    .portrait img { display: block; width: 100%; height: auto; border-radius: 48% 48% 6px 6px; border: 1px solid #899477; transform: rotate(2deg); }
+    .stamp { position: absolute; top: 9%; right: -9px; width: 96px; height: 96px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--ink); outline: 4px solid var(--yellow); border-radius: 50%; background: var(--yellow); transform: rotate(12deg); font-size: 11px; font-weight: 700; line-height: 1.8; letter-spacing: .08em; }
+    .stamp span { font-size: 24px; line-height: 1.1; }
+    figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 24px; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+    figcaption strong { font-size: 10px; }
+    .ribbon { background: var(--ink); color: var(--paper); padding-block: 20px; }
+    .ribbon .wrap { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    .ribbon b { color: var(--yellow); font-size: 22px; font-weight: normal; line-height: 1; }
+    .about { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; padding-block: 90px; }
+    h2 { font: normal clamp(34px, 4vw, 49px)/1.1 Georgia, 'Times New Roman', serif; letter-spacing: -.045em; margin: 22px 0; }
+    .about-copy > p:last-child { max-width: 390px; color: var(--muted); font-size: 15px; }
+    .rules { padding-top: 3px; }
+    .rules > .eyebrow { margin-bottom: 24px; }
+    .rule { display: grid; grid-template-columns: 30px 1fr; column-gap: 12px; padding: 19px 0; border-top: 1px solid var(--line); }
+    .rule:last-child { border-bottom: 1px solid var(--line); }
+    .rule-number { font: italic 18px Georgia, serif; color: var(--muted); padding-top: 2px; }
+    h3 { margin: 0 0 4px; font-size: 15px; }
+    .rule p { margin: 0; font-size: 13px; color: var(--muted); }
+    .peace { padding: 46px 40px 34px; margin-bottom: 70px; border: 1px solid var(--line); border-radius: 8px; text-align: center; background: #ebeede; }
+    .peace h2 { margin-block: 15px 12px; }
+    .peace > p:not(.eyebrow) { color: var(--muted); font-size: 14px; margin-top: 0; }
+    .offerings { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .offerings .button { background: var(--paper); padding: 12px 19px; font-size: 12px; gap: 10px; }
+    .offerings .button[aria-pressed="true"] { background: var(--yellow); box-shadow: 2px 3px 0 var(--ink); }
+    .reply { min-height: 3.2em; display: grid; place-items: center; margin: 23px auto 0; max-width: 600px; font: italic 19px/1.5 Georgia, serif; }
+    footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-block: 25px 35px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+    footer .brand { color: var(--ink); font-size: 18px; }
+    @media (min-width: 1400px) { .hero { padding-block: 80px; } }
+    @media (max-width: 850px) {
+      .wrap { width: calc(100% - 48px); }
+      header { min-height: 80px; }
+      nav { gap: 20px; }
+      .hero { gap: 30px; padding-block: 50px; }
+      h1 { font-size: 70px; }
+      .stamp { width: 76px; height: 76px; font-size: 9px; right: 0; }
+      .about { gap: 40px; padding-block: 65px; }
+      .ribbon .wrap { font-size: 9px; letter-spacing: .06em; gap: 12px; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: calc(100% - 40px); }
+      header { gap: 12px; }
+      .brand { font-size: 21px; }
+      .brand span { font-size: 25px; margin-right: 4px; }
+      nav a:not(.nav-cta) { display: none; }
+      nav { font-size: 11px; }
+      .hero { grid-template-columns: 1fr; gap: 38px; padding-block: 40px 36px; }
+      h1 { font-size: clamp(62px, 15vw, 86px); margin-block: 24px; }
+      .hero-copy { padding-bottom: 0; }
+      .intro { max-width: 360px; font-size: 16px; }
+      .portrait { max-width: 440px; width: 100%; margin-inline: auto; padding-inline: 9px; }
+      .stamp { width: 86px; height: 86px; font-size: 10px; }
+      .ribbon .wrap { justify-content: center; flex-wrap: wrap; gap: 10px 16px; }
+      .ribbon .last, .ribbon b:last-of-type { display: none; }
+      .about { grid-template-columns: 1fr; padding-block: 52px; gap: 32px; }
+      .peace { padding: 32px 18px 22px; margin-bottom: 42px; }
+      .peace h2 { font-size: 35px; }
+      .offerings { gap: 10px; }
+      .reply { font-size: 18px; min-height: 5em; }
+      footer { align-items: flex-start; flex-direction: column; gap: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .button { transition: none; }
+      .button:hover { transform: none; }
+    }
   </style>
 </head>
 <body>
-  <h1 class="sr-only">Digital Rain</h1>
-  <canvas aria-hidden="true"></canvas>
-  <noscript>Enable JavaScript to see the digital rain.</noscript>
+  <a href="#main" class="skip">Skip to content</a>
+  <header class="wrap">
+    <a class="brand" href="#" aria-label="Baa Humbug home"><span aria-hidden="true">✳</span> BAA HUMBUG.</a>
+    <nav aria-label="Main navigation">
+      <a href="#about">Meet Bramble</a>
+      <a href="#rules">Pasture rules</a>
+      <a class="nav-cta" href="#peace">Offer peace <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> The pasture's least welcoming committee</p>
+        <h1 id="hero-title">Small sheep.<br>Big <em>feelings.</em></h1>
+        <p class="intro">This is Bramble. He's soft, he's fluffy, and he's already decided you're standing too close.</p>
+        <a class="button" href="#peace">Try to win him over <span aria-hidden="true">↗</span></a>
+        <span class="hero-note">Approach with snacks. And realistic expectations.</span>
+      </div>
+      <figure class="portrait">
+        <img src="assets/bramble-the-sheep.png" width="1254" height="1254" alt="A hand-painted fluffy sheep with a black face and a deeply unimpressed scowl, standing among yellow wildflowers in a green pasture." fetchpriority="high">
+        <div class="stamp" aria-label="100 percent wool, zero percent chill">100% WOOL<span aria-hidden="true">✳</span>0% CHILL</div>
+        <figcaption><span>Field notes / No. 001</span><strong>Current mood: mildly furious</strong></figcaption>
+      </figure>
+    </section>
+    <div class="ribbon" aria-label="All wool. No chill. Proudly unimpressed.">
+      <div class="wrap" aria-hidden="true"><span>A little wool. A lot of attitude.</span><b>✳</b><span>Not accepting feedback</span><b>✳</b><span class="last">Proudly unimpressed</span></div>
+    </div>
+    <section class="about wrap" id="about" aria-labelledby="about-title">
+      <div class="about-copy">
+        <p class="eyebrow">01 / Meet the resident</p>
+        <h2 id="about-title">A heart of gold.<br>A face that says<br><em>“absolutely not.”</em></h2>
+        <p>Bramble enjoys long walks away from people, judging the weather, and a good patch of grass. Beneath that magnificent scowl is a simple sheep with simple needs: a quiet field and everyone else's absence.</p>
+      </div>
+      <div class="rules" id="rules">
+        <h3 class="eyebrow">02 / The pasture rules</h3>
+        <div class="rule"><span class="rule-number" aria-hidden="true">01</span><div><h3>Admire from a respectful distance.</h3><p>If you can hear him sigh, take two steps back.</p></div></div>
+        <div class="rule"><span class="rule-number" aria-hidden="true">02</span><div><h3>The grass is his. All of it.</h3><p>Yes, that bit too. Especially that bit.</p></div></div>
+        <div class="rule"><span class="rule-number" aria-hidden="true">03</span><div><h3>Do not mistake fluff for an invitation.</h3><p>He is a sheep, not a communal throw pillow.</p></div></div>
+      </div>
+    </section>
+    <section class="peace wrap" id="peace" aria-labelledby="peace-title">
+      <p class="eyebrow">03 / Diplomatic relations</p>
+      <h2 id="peace-title">Care to make a peace offering?</h2>
+      <p>Choose wisely. He has very strong opinions.</p>
+      <div class="offerings" role="group" aria-label="Choose a peace offering">
+        <button class="button" type="button" data-offering="carrot" aria-pressed="false">A crunchy carrot <span aria-hidden="true">↗</span></button>
+        <button class="button" type="button" data-offering="quiet" aria-pressed="false">A quiet afternoon <span aria-hidden="true">↗</span></button>
+        <button class="button" type="button" data-offering="hug" aria-pressed="false">An unsolicited hug <span aria-hidden="true">↗</span></button>
+      </div>
+      <p class="reply" id="reply" role="status" aria-live="polite" aria-atomic="true">He's waiting. Impatiently.</p>
+      <noscript><p>Bramble requires JavaScript to consider your offering. Naturally.</p></noscript>
+    </section>
+  </main>
+  <footer class="wrap"><a class="brand" href="#">BAA HUMBUG.</a><span>A fictional sheep. A very real mood.</span><span>Made with wool &amp; a healthy disrespect for authority.</span></footer>
   <script>
-    const canvas = document.querySelector('canvas');
-    const context = canvas.getContext('2d');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789';
-    const cell = 22;
-    const pointer = { active: false, id: null, x: 0, y: 0 };
-    const pushRadius = 120;
-    const pushStrength = 42;
-    let width, height, streams;
-    let animation = null;
-    let previousTime = 0;
-
-    const randomCharacter = () => characters[Math.floor(Math.random() * characters.length)];
-
-    function makeStream(scattered = false) {
-      return {
-        head: scattered ? Math.random() * (height / cell + 20) : -Math.random() * 30,
-        speed: 7 + Math.random() * 13,
-        length: 10 + Math.floor(Math.random() * 22),
-        glyphs: Array.from({ length: 34 }, randomCharacter),
-        displacements: new Map()
-      };
-    }
-
-    function movePointer(event) {
-      if (reducedMotion.matches || event.isPrimary === false) return;
-      if (event.pointerType !== 'mouse' && pointer.id !== event.pointerId) return;
-      const bounds = canvas.getBoundingClientRect();
-      pointer.x = event.clientX - bounds.left;
-      pointer.y = event.clientY - bounds.top;
-      pointer.active = true;
-    }
-
-    function clearPointer() {
-      pointer.active = false;
-      pointer.id = null;
-    }
-
-    function displace(stream, row, x, y, delta) {
-      let targetX = 0;
-      let targetY = 0;
-      if (pointer.active && !reducedMotion.matches) {
-        const dx = x + cell / 2 - pointer.x;
-        const dy = y + cell / 2 - pointer.y;
-        const distance = Math.hypot(dx, dy);
-        if (distance < pushRadius) {
-          const force = pushStrength * Math.pow(1 - distance / pushRadius, 2);
-          // A character directly under the pointer still needs a direction to move.
-          targetX = (distance > 0.01 ? dx / distance : 1) * force;
-          targetY = (distance > 0.01 ? dy / distance : 0) * force;
-        }
-      }
-      let offset = stream.displacements.get(row);
-      if (!offset && targetX === 0 && targetY === 0) return { x: 0, y: 0 };
-      if (!offset) {
-        offset = { x: 0, y: 0 };
-        stream.displacements.set(row, offset);
-      }
-      // Time-based easing keeps both the push and the return smooth at any frame rate.
-      const easing = 1 - Math.exp(-10 * delta);
-      offset.x += (targetX - offset.x) * easing;
-      offset.y += (targetY - offset.y) * easing;
-      if (targetX === 0 && targetY === 0 && Math.hypot(offset.x, offset.y) < 0.05) {
-        stream.displacements.delete(row);
-        return { x: 0, y: 0 };
-      }
-      return offset;
-    }
-
-    function draw(delta) {
-      context.shadowBlur = 0;
-      context.fillStyle = '#000';
-      context.fillRect(0, 0, width, height);
-      context.font = `${cell}px monospace`;
-      context.textBaseline = 'top';
-      streams.forEach((stream, column) => {
-        stream.head += stream.speed * delta;
-        if (stream.head - stream.length > height / cell) {
-          Object.assign(stream, makeStream());
-        }
-        if (delta > 0 && Math.random() < delta * 12) {
-          stream.glyphs[Math.floor(Math.random() * stream.glyphs.length)] = randomCharacter();
-        }
-        const headRow = Math.floor(stream.head);
-        for (const row of stream.displacements.keys()) {
-          if (row > headRow || row <= headRow - stream.length) stream.displacements.delete(row);
-        }
-        for (let offset = stream.length - 1; offset >= 0; offset--) {
-          const row = headRow - offset;
-          const y = row * cell;
-          if (y < -cell || y > height) continue;
-          const x = column * cell;
-          const displacement = displace(stream, row, x, y, delta);
-          context.shadowColor = '#43ff83';
-          context.shadowBlur = offset === 0 ? 8 : 0;
-          context.fillStyle = offset === 0 ? '#caffdc' : `rgba(0, 245, 90, ${Math.pow(1 - offset / stream.length, 1.7) * 0.85})`;
-          const glyph = stream.glyphs[((row % stream.glyphs.length) + stream.glyphs.length) % stream.glyphs.length];
-          context.fillText(glyph, x + displacement.x, y + displacement.y);
-        }
+    const replies = {
+      carrot: 'The carrot is accepted. Your presence remains under review.',
+      quiet: 'Finally. Someone who understands him. You may leave now.',
+      hug: 'Absolutely not. Diplomatic relations have been suspended.'
+    };
+    const buttons = document.querySelectorAll('[data-offering]');
+    const reply = document.getElementById('reply');
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        buttons.forEach(option => option.setAttribute('aria-pressed', String(option === button)));
+        reply.textContent = replies[button.dataset.offering];
       });
-    }
-
-    function frame(time) {
-      const delta = previousTime ? Math.min((time - previousTime) / 1000, 0.05) : 0;
-      previousTime = time;
-      draw(delta);
-      animation = requestAnimationFrame(frame);
-    }
-
-    function syncAnimation() {
-      cancelAnimationFrame(animation);
-      animation = null;
-      previousTime = 0;
-      if (document.hidden || reducedMotion.matches) clearPointer();
-      if (!reducedMotion.matches && !document.hidden) animation = requestAnimationFrame(frame);
-    }
-
-    function resize() {
-      clearPointer();
-      width = window.innerWidth;
-      height = window.innerHeight;
-      const scale = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * scale);
-      canvas.height = Math.round(height * scale);
-      context.setTransform(scale, 0, 0, scale, 0, 0);
-      streams = Array.from({ length: Math.ceil(width / cell) }, () => makeStream(true));
-      draw(0);
-    }
-
-    canvas.addEventListener('pointerdown', event => {
-      if (reducedMotion.matches || event.isPrimary === false) return;
-      pointer.id = event.pointerId;
-      if (event.pointerType !== 'mouse') canvas.setPointerCapture(event.pointerId);
-      movePointer(event);
     });
-    canvas.addEventListener('pointermove', movePointer);
-    canvas.addEventListener('pointerleave', event => {
-      if (event.pointerType === 'mouse') clearPointer();
-    });
-    canvas.addEventListener('pointerup', event => {
-      if (event.pointerId === pointer.id && event.pointerType !== 'mouse') clearPointer();
-    });
-    canvas.addEventListener('pointercancel', event => {
-      if (event.pointerId === pointer.id || event.pointerType === 'mouse') clearPointer();
-    });
-    canvas.addEventListener('lostpointercapture', event => {
-      if (event.pointerId === pointer.id) clearPointer();
-    });
-    window.addEventListener('blur', clearPointer);
-    window.addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', syncAnimation);
-    reducedMotion.addEventListener('change', () => { resize(); syncAnimation(); });
-    resize();
-    syncAnimation();
   </script>
 </body>
 </html>
