@@ -2,9 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Hello, world!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Digital Rain</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    noscript { position: fixed; inset: 0; display: grid; place-items: center; color: #43ff83; font-family: monospace; }
+  </style>
 </head>
 <body>
-  <h1>Hello, world!</h1>
+  <h1 class="sr-only">Digital Rain</h1>
+  <canvas aria-hidden="true"></canvas>
+  <noscript>Enable JavaScript to see the digital rain.</noscript>
+  <script>
+    const canvas = document.querySelector('canvas');
+    const context = canvas.getContext('2d');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789';
+    const cell = 22;
+    let width, height, streams;
+    let animation = null;
+    let previousTime = 0;
+
+    const randomCharacter = () => characters[Math.floor(Math.random() * characters.length)];
+
+    function makeStream(scattered = false) {
+      return {
+        head: scattered ? Math.random() * (height / cell + 20) : -Math.random() * 30,
+        speed: 7 + Math.random() * 13,
+        length: 10 + Math.floor(Math.random() * 22),
+        glyphs: Array.from({ length: 34 }, randomCharacter)
+      };
+    }
+
+    function draw(delta) {
+      context.shadowBlur = 0;
+      context.fillStyle = '#000';
+      context.fillRect(0, 0, width, height);
+      context.font = `${cell}px monospace`;
+      context.textBaseline = 'top';
+      streams.forEach((stream, column) => {
+        stream.head += stream.speed * delta;
+        if (stream.head - stream.length > height / cell) {
+          Object.assign(stream, makeStream());
+        }
+        if (delta > 0 && Math.random() < delta * 12) {
+          stream.glyphs[Math.floor(Math.random() * stream.glyphs.length)] = randomCharacter();
+        }
+        for (let offset = stream.length - 1; offset >= 0; offset--) {
+          const row = Math.floor(stream.head) - offset;
+          const y = row * cell;
+          if (y < -cell || y > height) continue;
+          context.shadowColor = '#43ff83';
+          context.shadowBlur = offset === 0 ? 8 : 0;
+          context.fillStyle = offset === 0 ? '#caffdc' : `rgba(0, 245, 90, ${Math.pow(1 - offset / stream.length, 1.7) * 0.85})`;
+          const glyph = stream.glyphs[((row % stream.glyphs.length) + stream.glyphs.length) % stream.glyphs.length];
+          context.fillText(glyph, column * cell, y);
+        }
+      });
+    }
+
+    function frame(time) {
+      const delta = previousTime ? Math.min((time - previousTime) / 1000, 0.05) : 0;
+      previousTime = time;
+      draw(delta);
+      animation = requestAnimationFrame(frame);
+    }
+
+    function syncAnimation() {
+      cancelAnimationFrame(animation);
+      animation = null;
+      previousTime = 0;
+      if (!reducedMotion.matches && !document.hidden) animation = requestAnimationFrame(frame);
+    }
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      streams = Array.from({ length: Math.ceil(width / cell) }, () => makeStream(true));
+      draw(0);
+    }
+
+    window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', syncAnimation);
+    reducedMotion.addEventListener('change', () => { resize(); syncAnimation(); });
+    resize();
+    syncAnimation();
+  </script>
 </body>
 </html>
