@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1018">
+  <meta name="description" content="Fly the last postal skiff through eight relay stations in a portrait arcade space shooter.">
+  <title>Dead Letter Orbit · Orbital Post</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <header class="mast">
+    <div class="brand"><span class="insignia" aria-hidden="true"><i></i></span><span>ORBITAL POST</span></div>
+    <nav aria-label="Game settings">
+      <button id="manual-open" class="tool"><span class="book-icon" aria-hidden="true"></span> Flight manual</button>
+      <button id="sound" class="tool" aria-pressed="false"><span class="sound-bars" aria-hidden="true"></span><span id="sound-label">Sound off</span></button>
+    </nav>
+  </header>
+
+  <main id="hangar" class="hangar">
+    <section class="cover" aria-labelledby="title">
+      <div class="cover-art"></div>
+      <div class="cover-copy">
+        <div class="eyebrow"><i></i> Night mail service</div>
+        <h1 id="title">Dead Letter<br><em>Orbit</em></h1>
+        <p>Pilot the last postal skiff. Break through rogue sorting drones and deliver the mail before dawn.</p>
+        <button id="launch" class="primary"><span class="play-icon" aria-hidden="true"></span> Launch run</button>
+      </div>
+      <div class="edge" aria-hidden="true"></div>
+    </section>
+
+    <section class="log" aria-label="Flight record on this device">
+      <div><span>Personal best</span><strong id="best">000000</strong></div>
+      <div><span>Furthest station</span><strong id="furthest">— <small>/ 08</small></strong></div>
+      <div><span>Completed runs</span><strong id="flights">000</strong></div>
+    </section>
+    <section class="route-panel" aria-labelledby="route-title">
+      <div class="section-heading"><h2 id="route-title">Flight route</h2><span>8 relay stations</span></div>
+      <ol class="route" id="route"></ol>
+    </section>
+  </main>
+
+  <main id="cockpit" hidden aria-label="Game in progress">
+    <div class="instrument">
+      <div class="hud">
+        <div><span>Score</span><b id="score">000000</b></div>
+        <div><span>Combo</span><b id="combo">×1</b><i id="combo-bar"></i></div>
+        <div><span>Lives</span><b id="lives">3</b></div>
+        <button id="pause" class="tool" aria-label="Pause flight">Ⅱ</button>
+      </div>
+      <div id="field-box"><canvas id="field" width="360" height="640" tabindex="-1" aria-label="Flight field. Move with arrows or WASD and fire with Space. On touchscreens drag to steer."></canvas>
+        <div class="field-status"><span id="station-label"></span><span id="timer"></span></div>
+        <div id="transition" hidden><span>Approaching station</span><strong id="incoming"></strong></div>
+      </div>
+    </div>
+    <aside class="flight-aside"><span class="eyebrow"><i></i> Practice flight</span><h2>Dead Letter<br><em>Orbit</em></h2><ol id="flight-route"></ol><p class="aside-help"></p></aside>
+  </main>
+
+  <dialog id="panel" aria-labelledby="panel-title">
+    <form method="dialog" id="panel-inner">
+      <div class="eyebrow"><i></i> Orbital Post</div>
+      <h2 id="panel-title"></h2>
+      <div id="panel-body"></div>
+      <div id="panel-actions"></div>
+    </form>
+  </dialog>
+  <noscript>Enable JavaScript to fly Dead Letter Orbit.</noscript>
+</body>
+</html>

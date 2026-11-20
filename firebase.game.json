@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "target": "space-shooter",
+    "public": "game",
+    "ignore": ["**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" }
+        ]
+      },
+      {
+        "source": "**/*.mjs",
+        "headers": [{ "key": "Content-Type", "value": "text/javascript; charset=utf-8" }]
+      }
+    ]
+  }
+}
