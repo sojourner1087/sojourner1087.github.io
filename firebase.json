@@ -1,0 +1,6 @@
+{
+  "hosting": {
+    "public": "firebase-public",
+    "predeploy": "sh scripts/stage-firebase.sh"
+  }
+}

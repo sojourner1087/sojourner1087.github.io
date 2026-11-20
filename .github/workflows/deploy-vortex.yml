@@ -1,0 +1,32 @@
+name: Deploy Vortex to Firebase Hosting
+
+on:
+  push:
+    branches: [vortex-flow]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-maswany-vortex
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test Vortex Field
+        run: node --test tests/vortex-flow.test.cjs
+      - name: Deploy to maswany-vortex
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MASWANY_VORTEX }}
+          projectId: maswany-vortex
+          channelId: live
+          firebaseToolsVersion: '15.37.0'
