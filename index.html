@@ -7,6 +7,21 @@
   <meta name="description" content="Meet Bramble. A small sheep with big feelings, strict pasture rules, and absolutely no time for your nonsense.">
   <title>Baa Humbug — Small sheep. Big feelings.</title>
   <link rel="icon" href="data:,">
+  <script>
+    // A refresh starts at the hero, even after visiting a section link.
+    if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
+      const restoration = history.scrollRestoration;
+      history.scrollRestoration = 'manual';
+      if (location.hash) history.replaceState(history.state, '', location.pathname + location.search);
+      window.addEventListener('pageshow', () => {
+        // Finish after the browser has restored the previous viewport.
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          history.scrollRestoration = restoration;
+        });
+      }, { once: true });
+    }
+  </script>
   <style>
     :root { --paper: #f5f2e5; --ink: #293e30; --muted: #5a6655; --yellow: #eed173; --line: #c9cdb9; }
     * { box-sizing: border-box; }
@@ -120,8 +135,8 @@
       <div class="hero-copy">
         <p class="eyebrow"><span class="dot" aria-hidden="true"></span> The pasture's least welcoming committee</p>
         <h1 id="hero-title">Small sheep.<br>Big <em>feelings.</em></h1>
-        <p class="intro">This is Bramble. He's soft, he's fluffy, and he's already decided you're standing too close.</p>
-        <a class="button" href="#peace">Try to win him over <span aria-hidden="true">↗</span></a>
+        <p class="intro">This is Bramble. Sshe's soft, she's fluffy, and she's already decided you're standing too close.</p>
+        <a class="button" href="#peace">Try to win her over <span aria-hidden="true">↗</span></a>
         <span class="hero-note">Approach with snacks. And realistic expectations.</span>
       </div>
       <figure class="portrait">
@@ -141,21 +156,21 @@
       </div>
       <div class="rules" id="rules">
         <h3 class="eyebrow">02 / The pasture rules</h3>
-        <div class="rule"><span class="rule-number" aria-hidden="true">01</span><div><h3>Admire from a respectful distance.</h3><p>If you can hear him sigh, take two steps back.</p></div></div>
-        <div class="rule"><span class="rule-number" aria-hidden="true">02</span><div><h3>The grass is his. All of it.</h3><p>Yes, that bit too. Especially that bit.</p></div></div>
-        <div class="rule"><span class="rule-number" aria-hidden="true">03</span><div><h3>Do not mistake fluff for an invitation.</h3><p>He is a sheep, not a communal throw pillow.</p></div></div>
+        <div class="rule"><span class="rule-number" aria-hidden="true">01</span><div><h3>Admire from a respectful distance.</h3><p>If you can hear her sigh, take two steps back.</p></div></div>
+        <div class="rule"><span class="rule-number" aria-hidden="true">02</span><div><h3>The grass is hers. All of it.</h3><p>Yes, that bit too. Especially that bit.</p></div></div>
+        <div class="rule"><span class="rule-number" aria-hidden="true">03</span><div><h3>Do not mistake fluff for an invitation.</h3><p>She is a sheep, not a communal throw pillow.</p></div></div>
       </div>
     </section>
     <section class="peace wrap" id="peace" aria-labelledby="peace-title">
       <p class="eyebrow">03 / Diplomatic relations</p>
       <h2 id="peace-title">Care to make a peace offering?</h2>
-      <p>Choose wisely. He has very strong opinions.</p>
+      <p>Choose wisely. She has very strong opinions.</p>
       <div class="offerings" role="group" aria-label="Choose a peace offering">
         <button class="button" type="button" data-offering="carrot" aria-pressed="false">A crunchy carrot <span aria-hidden="true">↗</span></button>
         <button class="button" type="button" data-offering="quiet" aria-pressed="false">A quiet afternoon <span aria-hidden="true">↗</span></button>
         <button class="button" type="button" data-offering="hug" aria-pressed="false">An unsolicited hug <span aria-hidden="true">↗</span></button>
       </div>
-      <p class="reply" id="reply" role="status" aria-live="polite" aria-atomic="true">He's waiting. Impatiently.</p>
+      <p class="reply" id="reply" role="status" aria-live="polite" aria-atomic="true">Sshe's waiting. Impatiently.</p>
       <noscript><p>Bramble requires JavaScript to consider your offering. Naturally.</p></noscript>
     </section>
   </main>
@@ -163,7 +178,7 @@
   <script>
     const replies = {
       carrot: 'The carrot is accepted. Your presence remains under review.',
-      quiet: 'Finally. Someone who understands him. You may leave now.',
+      quiet: 'Finally. Someone who understands her. You may leave now.',
       hug: 'Absolutely not. Diplomatic relations have been suspended.'
     };
     const buttons = document.querySelectorAll('[data-offering]');
