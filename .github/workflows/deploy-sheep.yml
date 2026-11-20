@@ -1,0 +1,30 @@
+name: Deploy Sheep to Firebase Hosting
+
+on:
+  push:
+    branches: [sheep-website]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-maswany-sheep
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Deploy to maswany-sheep
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MASWANY_SHEEP }}
+          projectId: maswany-sheep
+          channelId: live
+          firebaseToolsVersion: '15.37.0'
