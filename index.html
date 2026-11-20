@@ -2,479 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#07111d">
-  <meta name="description" content="An interactive, locally computed vortex flow field. Add and remove vortices and watch the currents change.">
-  <title>Vortex Field — an interactive flow study</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f9f8">
+  <meta name="description" content="A home for projects and experiments from Maswany.">
+  <title>Maswany — Projects &amp; experiments</title>
+  <link rel="icon" href="data:,">
   <style>
-    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #e7f2f4; background: #07111d; }
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #192823; background: #f8f9f8; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-    body { background: #07111d; }
-    canvas { position: fixed; inset: 0; display: block; width: 100%; height: 100%; }
-    [hidden] { display: none !important; }
-    #flow { touch-action: manipulation; cursor: crosshair; }
-    #flow:focus-visible { outline: 2px solid #9ef4ec; outline-offset: -4px; }
-    #markers { pointer-events: none; }
-    .interface { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: max(24px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left)); }
-    .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
-    .identity, .controls, .panel { pointer-events: auto; }
-    .identity { text-shadow: 0 2px 20px #07111d; }
-    .kicker { margin: 0 0 8px; color: #78d8d5; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
-    h1 { margin: 0; font-size: clamp(23px, 3.4vw, 34px); font-weight: 500; letter-spacing: -.045em; line-height: 1; }
-    .subtitle { margin: 9px 0 0; color: #a7bdc9; font-size: 12px; }
-    .controls { display: flex; gap: 8px; }
-    button { color: #d8ebed; border: 1px solid #496474; background: rgba(9, 23, 35, .88); font: inherit; font-size: 12px; border-radius: 7px; padding: 10px 14px; cursor: pointer; }
-    button:hover { background: #1b3544; border-color: #8bbcc5; }
-    button:focus-visible { outline: 2px solid #9ef4ec; outline-offset: 3px; }
-    .bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
-    .panel { width: 380px; max-width: 100%; padding: 17px 19px; border: 1px solid rgba(146, 184, 198, .24); border-radius: 10px; background: rgba(8, 22, 33, .88); box-shadow: 0 12px 40px #0003; backdrop-filter: blur(12px); }
-    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .panel-title { margin: 0; color: #b7cbd2; font-size: 11px; line-height: 1.8; }
-    #count { color: #e7f2f4; font-variant-numeric: tabular-nums; }
-    #count[data-full="true"] { color: #ffd1a6; }
-    #toggle-panel { font-size: 11px; padding: 9px 10px; flex-shrink: 0; }
-    #panel-body { margin-top: 12px; max-height: min(310px, 38vh); overflow-y: auto; padding: 4px; }
-    .feedback { margin: 10px 0 0; min-height: 2.8em; color: #b9d7dc; font-size: 11px; line-height: 1.4; }
-    .feedback[data-warning="true"] { color: #ffd1a6; }
-    kbd { font: inherit; color: #d9e6e8; }
-    .live { display: inline-flex; align-items: center; gap: 6px; color: #83d8ca; letter-spacing: .08em; }
-    .live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .instructions { margin: 0; color: #d9e6e8; font-size: 12px; line-height: 1.8; }
-    .instructions span { color: #8fa8b2; }
-    .directions { display: flex; gap: 7px; margin-top: 13px; }
-    .directions button { flex: 1; padding: 8px 9px; font-size: 11px; }
-    .directions button[aria-pressed="true"] { color: #0a2027; background: #a3e6db; border-color: #a3e6db; }
-    .hint { margin: 10px 0 0; color: #8fa8b2; font-size: 10px; line-height: 1.5; }
-    .stats { text-align: right; color: #9eb5c0; text-shadow: 0 2px 12px #07111d; font-size: 10px; line-height: 1.7; letter-spacing: .1em; text-transform: uppercase; }
-    .stats strong { display: block; color: #e7f2f4; font-size: 18px; letter-spacing: 0; font-weight: 500; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-    @media (max-width: 600px) {
-      .interface { padding: max(18px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
-      .kicker { font-size: 9px; margin-bottom: 6px; }
-      h1 { font-size: 23px; }
-      .subtitle { font-size: 11px; }
-      .controls { gap: 5px; }
-      .controls button { padding: 9px 10px; font-size: 11px; }
-      .bottom { gap: 8px; }
-      .panel { padding: 12px 13px; max-width: min(340px, calc(100vw - 32px)); }
-      .panel-title { font-size: 10px; }
-      .instructions { font-size: 11px; line-height: 1.65; }
-      .directions { margin-top: 8px; }
-      .hint { margin-top: 7px; }
-      .stats { display: none; }
+    body { margin: 0; }
+    .wrap { width: min(1040px, calc(100% - 64px)); margin: 0 auto; }
+    header { padding: 34px 0; border-bottom: 1px solid #dce2df; }
+    .brand { color: inherit; text-decoration: none; font-size: 18px; font-weight: 750; letter-spacing: -.045em; }
+    .brand span { color: #638879; }
+    main { padding: clamp(80px, 13vw, 150px) 0 110px; }
+    .eyebrow { margin: 0 0 24px; color: #557468; font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { max-width: 780px; margin: 0; font-size: clamp(48px, 8vw, 88px); font-weight: 600; letter-spacing: -.065em; line-height: 1.02; }
+    .intro { max-width: 490px; margin: 28px 0 0; color: #62716a; font-size: 19px; line-height: 1.65; }
+    .projects { margin-top: clamp(80px, 11vw, 130px); }
+    .section-label { margin: 0 0 18px; color: #62716a; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .project { display: grid; grid-template-columns: 1fr 1.2fr auto; align-items: center; gap: 28px; padding: 30px 0; border-top: 1px solid #dce2df; color: inherit; text-decoration: none; }
+    .project:last-child { border-bottom: 1px solid #dce2df; }
+    .project h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.035em; }
+    .project p { margin: 0; color: #62716a; line-height: 1.55; }
+    .visit { color: #315c4c; font-size: 14px; font-weight: 650; white-space: nowrap; }
+    .project:hover h2, .project:hover .visit { text-decoration: underline; text-underline-offset: 5px; }
+    a:focus-visible { outline: 3px solid #557e6e; outline-offset: 5px; }
+    footer { padding: 28px 0 38px; border-top: 1px solid #dce2df; color: #74817b; font-size: 14px; }
+    @media (max-width: 650px) {
+      .wrap { width: calc(100% - 40px); }
+      header { padding: 25px 0; }
+      main { padding: 80px 0; }
+      .project { grid-template-columns: 1fr auto; gap: 8px 20px; padding: 25px 0; }
+      .project p { grid-column: 1 / -1; grid-row: 2; }
+      .visit { grid-column: 2; grid-row: 1; }
     }
   </style>
 </head>
 <body>
-  <canvas id="flow" tabindex="0" role="application" aria-label="Interactive vortex field" aria-describedby="keyboard-help"></canvas>
-  <canvas id="markers" aria-hidden="true"></canvas>
-  <div class="interface">
-    <header class="top">
-      <div class="identity" data-field-overlay><p class="kicker">An interactive flow study</p><h1>Vortex Field<span style="color:#76d6cf">.</span></h1><p class="subtitle">A little order in the chaos.</p></div>
-      <div class="controls" data-field-overlay><button id="pause" type="button" aria-pressed="false">Pause</button><button id="reset" type="button">New field ↗</button></div>
-    </header>
-    <div class="bottom">
-      <section class="panel" id="panel" data-field-overlay aria-label="Simulation controls and instructions">
-        <div class="panel-header">
-          <p class="panel-title"><strong id="count">02 / 24</strong> vortices<br><span class="live" id="state-label">Running</span></p>
-          <button id="toggle-panel" type="button" aria-expanded="true" aria-controls="panel-body">Hide controls</button>
-        </div>
-        <p class="feedback" id="announcement" role="status" aria-live="polite" aria-atomic="true">Click a center to remove a vortex.</p>
-        <div id="panel-body">
-          <p class="instructions"><strong>Left click</strong> <span>to add clockwise</span><br><strong>Right click</strong> <span>to add counterclockwise</span><br><strong>Click a center</strong> <span>to remove a vortex</span></p>
-          <div class="directions" role="group" aria-label="Direction for touchscreen taps and keyboard placement"><button type="button" id="clockwise" aria-pressed="true">↻ Clockwise</button><button type="button" id="counterclockwise" aria-pressed="false">↺ Counterclockwise</button></div>
-          <p class="hint" id="keyboard-help">Tab to the field. Arrow keys move the crosshair; Shift + arrows move precisely. Enter adds a vortex. Delete removes one. C reverses direction. N selects the next vortex.</p>
-          <p class="hint">On touchscreens, choose a direction, then tap the field. Flow is calculated on your device.</p>
-        </div>
-      </section>
-      <div class="stats" data-field-overlay>Computed on your device<br>idealized 2D flow</div>
-    </div>
-  </div>
-  <script>
-    const canvas = document.getElementById('flow');
-    const ctx = canvas.getContext('2d', { alpha: false });
-    const markers = document.getElementById('markers');
-    const markerCtx = markers.getContext('2d');
-    const pauseButton = document.getElementById('pause');
-    const resetButton = document.getElementById('reset');
-    const clockwiseButton = document.getElementById('clockwise');
-    const counterButton = document.getElementById('counterclockwise');
-    const count = document.getElementById('count');
-    const stateLabel = document.getElementById('state-label');
-    const announcement = document.getElementById('announcement');
-    const panelBody = document.getElementById('panel-body');
-    const panelToggle = document.getElementById('toggle-panel');
-    const overlays = [...document.querySelectorAll('[data-field-overlay]')];
-    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const MAX_VORTICES = 24;
-    const CORE = 38;
-    const STRENGTH = 19000;
-    const HIT_RADIUS = 22;
-    const CLEARANCE = HIT_RADIUS + 6;
-    let width = 0, height = 0, pixelRatio = 1;
-    let vortices = [], particles = [];
-    let blockedAreas = [];
-    let selectedDirection = 1;
-    let running = !motionPreference.matches;
-    let frameId = null, previousTime = 0;
-    const cursor = { x: 0, y: 0, visible: false, selected: null };
-    const stages = Array.from({ length: 4 }, () => ({ x: 0, y: 0, rate: 0 }));
-    const paths = [[], [], []];
-
-    function report(message, warning = false) {
-      announcement.textContent = message;
-      announcement.dataset.warning = String(warning);
-    }
-    function setCollapsed(collapsed) {
-      panelBody.hidden = collapsed;
-      panelToggle.setAttribute('aria-expanded', String(!collapsed));
-      panelToggle.textContent = collapsed ? 'Show controls' : 'Hide controls';
-    }
-    function measureControls() {
-      blockedAreas = overlays.map(element => element.getBoundingClientRect())
-        .filter(rect => rect.width > 0 && rect.height > 0)
-        .map(rect => ({ left: rect.left - CLEARANCE, right: rect.right + CLEARANCE,
-          top: rect.top - CLEARANCE, bottom: rect.bottom + CLEARANCE }));
-    }
-    function isOpen(x, y, occupied = []) {
-      return x >= CLEARANCE && x <= width - CLEARANCE && y >= CLEARANCE && y <= height - CLEARANCE &&
-        !blockedAreas.some(rect => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) &&
-        !occupied.some(v => Math.hypot(v.x - x, v.y - y) <= HIT_RADIUS);
-    }
-    function clampPoint(point) {
-      return { x: Math.max(CLEARANCE, Math.min(width - CLEARANCE, point.x)),
-        y: Math.max(CLEARANCE, Math.min(height - CLEARANCE, point.y)) };
-    }
-    function findOpenPosition(preferred, occupied = []) {
-      const point = clampPoint(preferred);
-      if (isOpen(point.x, point.y, occupied)) return point;
-      // Find the nearest available spot, rather than jumping to a random location on resize.
-      let best = null, bestDistance = Infinity;
-      for (let y = CLEARANCE; y <= height - CLEARANCE; y += HIT_RADIUS + 2) {
-        for (let x = CLEARANCE; x <= width - CLEARANCE; x += HIT_RADIUS + 2) {
-          const distance = (x - point.x) ** 2 + (y - point.y) ** 2;
-          if (distance < bestDistance && isOpen(x, y, occupied)) {
-            best = { x, y }; bestDistance = distance;
-          }
-        }
-      }
-      return best;
-    }
-    function keepVorticesAccessible() {
-      measureControls();
-      const positions = [];
-      for (const vortex of vortices) {
-        const point = findOpenPosition(vortex, positions);
-        if (!point) {
-          // Preserve vortices on very small windows; collapsing gives them more room.
-          if (!panelBody.hidden) { setCollapsed(true); return keepVorticesAccessible(); }
-          report('More room needed. Enlarge the window; N and Delete still select and remove vortices.', true);
-          return false;
-        }
-        positions.push(point);
-      }
-      vortices.forEach((vortex, index) => Object.assign(vortex, positions[index]));
-      return true;
-    }
-    function layoutChanged() {
-      if (!width || !height) return;
-      keepVorticesAccessible();
-      if (cursor.selected && vortices.includes(cursor.selected)) Object.assign(cursor, { x: cursor.selected.x, y: cursor.selected.y });
-      else Object.assign(cursor, findOpenPosition(cursor) || clampPoint(cursor));
-      refreshField();
-    }
-
-    function randomParticle() {
-      return { x: Math.random() * width, y: Math.random() * height, age: Math.random() * 9 + 2 };
-    }
-    function field(x, y, output = {}) {
-      let vx = 0, vy = 0, rate = 0;
-      for (const vortex of vortices) {
-        const dx = x - vortex.x, dy = y - vortex.y;
-        const magnitude = STRENGTH / (dx * dx + dy * dy + CORE * CORE);
-        const factor = vortex.direction * magnitude;
-        vx -= dy * factor;
-        vy += dx * factor;
-        // Sum absolute contributions: opposite vortices can cancel velocity without
-        // cancelling shear. This bounds the local velocity gradient.
-        rate += magnitude;
-      }
-      output.x = vx; output.y = vy; output.rate = rate;
-      return output;
-    }
-    function advanceParticle(p, dt, trace = null) {
-      let remaining = dt;
-      const [a, b, c, d] = stages;
-      while (remaining > 1e-10) {
-        field(p.x, p.y, a);
-        const speed = Math.hypot(a.x, a.y);
-        // RK4 with bounded rotation and displacement per substep. Drawing rate
-        // no longer determines the accuracy of tight, fast orbits.
-        const step = Math.min(remaining, .25 / Math.max(a.rate, 1e-9), CORE * .25 / Math.max(speed, 1e-9));
-        field(p.x + a.x * step / 2, p.y + a.y * step / 2, b);
-        field(p.x + b.x * step / 2, p.y + b.y * step / 2, c);
-        field(p.x + c.x * step, p.y + c.y * step, d);
-        const nx = p.x + step * (a.x + 2 * b.x + 2 * c.x + d.x) / 6;
-        const ny = p.y + step * (a.y + 2 * b.y + 2 * c.y + d.y) / 6;
-        if (trace && speed > 1) trace[speed > 150 ? 2 : speed > 55 ? 1 : 0].push(p.x, p.y, nx, ny);
-        p.x = nx; p.y = ny;
-        remaining -= step;
-      }
-    }
-    function background() {
-      ctx.fillStyle = '#07111d';
-      ctx.fillRect(0, 0, width, height);
-    }
-    function updateCount() {
-      count.textContent = `${String(vortices.length).padStart(2, '0')} / ${MAX_VORTICES}`;
-      count.dataset.full = String(vortices.length >= MAX_VORTICES);
-    }
-    function drawMarkers() {
-      markerCtx.clearRect(0, 0, width, height);
-      markerCtx.font = '16px system-ui, sans-serif';
-      markerCtx.textAlign = 'center';
-      markerCtx.textBaseline = 'middle';
-      for (const vortex of vortices) {
-        const color = vortex.direction === 1 ? '#8ee6df' : '#f3b898';
-        markerCtx.beginPath();
-        markerCtx.arc(vortex.x, vortex.y, 16, 0, Math.PI * 2);
-        markerCtx.fillStyle = 'rgba(7, 17, 29, .84)';
-        markerCtx.fill();
-        markerCtx.strokeStyle = color;
-        markerCtx.lineWidth = 1.2;
-        markerCtx.stroke();
-        markerCtx.fillStyle = color;
-        markerCtx.fillText(vortex.direction === 1 ? '↻' : '↺', vortex.x, vortex.y + 1);
-      }
-      if (cursor.visible) {
-        markerCtx.strokeStyle = '#ffffff';
-        markerCtx.lineWidth = 1.5;
-        markerCtx.beginPath();
-        markerCtx.arc(cursor.x, cursor.y, 25, 0, Math.PI * 2);
-        markerCtx.moveTo(cursor.x - 32, cursor.y); markerCtx.lineTo(cursor.x + 32, cursor.y);
-        markerCtx.moveTo(cursor.x, cursor.y - 32); markerCtx.lineTo(cursor.x, cursor.y + 32);
-        markerCtx.stroke();
-      }
-      updateCount();
-    }
-    function randomize() {
-      measureControls();
-      vortices = [];
-      for (const direction of [1, -1]) {
-        let position = null;
-        for (let attempt = 0; attempt < 100 && !position; attempt++) {
-          const x = CLEARANCE + Math.random() * Math.max(0, width - 2 * CLEARANCE);
-          const y = CLEARANCE + Math.random() * Math.max(0, height - 2 * CLEARANCE);
-          if (isOpen(x, y, vortices)) position = { x, y };
-        }
-        position ||= findOpenPosition({ x: width / 2, y: height / 2 }, vortices);
-        if (position) vortices.push({ ...position, direction });
-      }
-      cursor.selected = null;
-      particles = Array.from({ length: particleCount() }, randomParticle);
-      background();
-      drawMarkers();
-      report(vortices.length === 2 ? 'New field: two vortices, ready to explore.' : 'Enlarge the window to make room for two vortices.', vortices.length !== 2);
-      if (!running) drawStill();
-    }
-    function particleCount() {
-      return Math.max(450, Math.min(1800, Math.round(width * height / 600)));
-    }
-    function resize() {
-      const oldWidth = width, oldHeight = height;
-      width = window.innerWidth;
-      height = window.innerHeight;
-      pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-      for (const layer of [canvas, markers]) {
-        layer.width = Math.round(width * pixelRatio);
-        layer.height = Math.round(height * pixelRatio);
-      }
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      markerCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      if (height < 500) setCollapsed(true);
-      if (oldWidth && oldHeight) {
-        for (const vortex of vortices) { vortex.x *= width / oldWidth; vortex.y *= height / oldHeight; }
-        cursor.x *= width / oldWidth; cursor.y *= height / oldHeight;
-        particles = Array.from({ length: particleCount() }, randomParticle);
-        background();
-        layoutChanged();
-      } else {
-        randomize();
-        Object.assign(cursor, findOpenPosition({ x: width / 2, y: height / 2 }) || clampPoint({ x: width / 2, y: height / 2 }));
-      }
-    }
-    function drawStill() {
-      // Show a field even when reduced motion starts the simulation paused.
-      const spacing = Math.max(18, Math.sqrt(width * height / 1800));
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(124, 213, 211, .55)';
-      ctx.beginPath();
-      for (let y = spacing / 2; y < height; y += spacing) {
-        for (let x = spacing / 2; x < width; x += spacing) {
-          const velocity = field(x, y);
-          const magnitude = Math.hypot(velocity.x, velocity.y);
-          if (magnitude < 1) continue;
-          const length = Math.min(10, magnitude / 8);
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + velocity.x / magnitude * length, y + velocity.y / magnitude * length);
-        }
-      }
-      ctx.stroke();
-    }
-    function paint(dt) {
-      ctx.fillStyle = `rgba(7, 17, 29, ${1 - Math.exp(-2.6 * dt)})`;
-      ctx.fillRect(0, 0, width, height);
-      // Batch tracer strokes by speed to keep the field smooth on phones.
-      paths.forEach(path => { path.length = 0; });
-      for (const p of particles) {
-        p.age -= dt;
-        if (p.x < -5 || p.x > width + 5 || p.y < -5 || p.y > height + 5 || p.age <= 0) {
-          Object.assign(p, randomParticle());
-          continue;
-        }
-        advanceParticle(p, dt, paths);
-      }
-      const colors = ['rgba(62, 151, 178, .32)', 'rgba(94, 215, 214, .57)', 'rgba(191, 243, 222, .85)'];
-      ctx.lineWidth = 1;
-      for (let i = 0; i < paths.length; i++) {
-        ctx.beginPath();
-        for (let j = 0; j < paths[i].length; j += 4) {
-          ctx.moveTo(paths[i][j], paths[i][j + 1]);
-          ctx.lineTo(paths[i][j + 2], paths[i][j + 3]);
-        }
-        ctx.strokeStyle = colors[i];
-        ctx.stroke();
-      }
-    }
-    function animate(time) {
-      frameId = null;
-      if (!running || document.hidden) return;
-      const dt = previousTime ? Math.min((time - previousTime) / 1000, .05) : 1 / 60;
-      previousTime = time;
-      paint(dt);
-      frameId = requestAnimationFrame(animate);
-    }
-    function syncAnimation() {
-      if (frameId !== null) cancelAnimationFrame(frameId);
-      frameId = null;
-      previousTime = 0;
-      pauseButton.textContent = running ? 'Pause' : 'Resume';
-      pauseButton.setAttribute('aria-pressed', String(!running));
-      stateLabel.textContent = running ? 'Running' : 'Paused';
-      if (running && !document.hidden) frameId = requestAnimationFrame(animate);
-    }
-    function refreshField() {
-      drawMarkers();
-      if (!running) { background(); drawStill(); }
-    }
-    function setDirection(direction) {
-      selectedDirection = direction;
-      clockwiseButton.setAttribute('aria-pressed', String(direction === 1));
-      counterButton.setAttribute('aria-pressed', String(direction === -1));
-      report(`${direction === 1 ? 'Clockwise' : 'Counterclockwise'} selected for touch and keyboard.`);
-    }
-    function vortexAt(x, y) {
-      // Prefer the closest center when deletion targets overlap.
-      let closest = -1, distance = HIT_RADIUS;
-      vortices.forEach((vortex, index) => {
-        const candidate = Math.hypot(vortex.x - x, vortex.y - y);
-        if (candidate <= distance) { closest = index; distance = candidate; }
-      });
-      return closest;
-    }
-    function removeVortex(index) {
-      if (index < 0) { report('No vortex at the crosshair. Press N to select one.'); return; }
-      vortices.splice(index, 1);
-      cursor.selected = null;
-      report(`Vortex removed. ${vortices.length} of ${MAX_VORTICES} active.`);
-      refreshField();
-    }
-    function addVortex(x, y, direction) {
-      if (vortices.length >= MAX_VORTICES) {
-        report(`Limit reached: ${MAX_VORTICES}/${MAX_VORTICES} vortices. Remove one to add another.`, true);
-        return;
-      }
-      measureControls();
-      if (!isOpen(x, y)) { report('Move farther from the controls or screen edge to add a vortex.', true); return; }
-      if (vortexAt(x, y) !== -1) { report('A vortex is already here. Press Delete to remove it.'); return; }
-      const vortex = { x, y, direction };
-      vortices.push(vortex);
-      if (cursor.visible) cursor.selected = vortex;
-      report(`${direction === 1 ? 'Clockwise' : 'Counterclockwise'} added. ${vortices.length}/${MAX_VORTICES} active.${vortices.length === MAX_VORTICES ? ' Limit reached; remove one to add another.' : ''}`, vortices.length === MAX_VORTICES);
-      refreshField();
-    }
-    function describeCursor() {
-      const index = vortexAt(cursor.x, cursor.y);
-      const location = `${Math.round(cursor.x / width * 100)}% across, ${Math.round(cursor.y / height * 100)}% down.`;
-      const action = index !== -1 ? `Vortex ${index + 1}, ${vortices[index].direction === 1 ? 'clockwise' : 'counterclockwise'}. Delete to remove.` : `${selectedDirection === 1 ? 'Clockwise' : 'Counterclockwise'}. Enter to add.`;
-      report(`${location} ${action}`);
-    }
-    canvas.addEventListener('contextmenu', event => event.preventDefault());
-    canvas.addEventListener('pointerdown', event => {
-      if (event.isPrimary === false || (event.button !== 0 && event.button !== 2)) return;
-      const bounds = canvas.getBoundingClientRect();
-      const x = event.clientX - bounds.left, y = event.clientY - bounds.top;
-      canvas.focus({ preventScroll: true });
-      Object.assign(cursor, { x, y, visible: false, selected: null });
-      drawMarkers();
-      const index = vortexAt(x, y);
-      if (index !== -1) {
-        if (event.button === 0) removeVortex(index);
-        return;
-      }
-      const direction = event.pointerType === 'mouse' ? (event.button === 2 ? -1 : 1) : selectedDirection;
-      addVortex(x, y, direction);
-    });
-    canvas.addEventListener('focus', () => {
-      cursor.visible = true;
-      describeCursor();
-      drawMarkers();
-    });
-    canvas.addEventListener('blur', () => { cursor.visible = false; drawMarkers(); });
-    canvas.addEventListener('keydown', event => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      const key = event.key.toLowerCase();
-      const arrows = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
-      if (!arrows[key] && !['enter', 'delete', 'backspace', 'c', 'n'].includes(key)) return;
-      event.preventDefault();
-      cursor.visible = true;
-      if (arrows[key]) {
-        const step = event.shiftKey ? 4 : 16;
-        Object.assign(cursor, clampPoint({ x: cursor.x + arrows[key][0] * step, y: cursor.y + arrows[key][1] * step }));
-        cursor.selected = null;
-        describeCursor();
-      } else if (!event.repeat) {
-        if (key === 'enter') addVortex(cursor.x, cursor.y, selectedDirection);
-        else if (key === 'delete' || key === 'backspace') removeVortex(vortexAt(cursor.x, cursor.y));
-        else if (key === 'c') setDirection(-selectedDirection);
-        else if (key === 'n') {
-          if (!vortices.length) report('No vortices to select. Use arrows and Enter to add one.');
-          else {
-            cursor.selected = vortices[(vortices.indexOf(cursor.selected) + 1) % vortices.length];
-            cursor.x = cursor.selected.x; cursor.y = cursor.selected.y;
-            describeCursor();
-          }
-        }
-      }
-      drawMarkers();
-    });
-    pauseButton.addEventListener('click', () => { running = !running; syncAnimation(); });
-    resetButton.addEventListener('click', randomize);
-    clockwiseButton.addEventListener('click', () => setDirection(1));
-    counterButton.addEventListener('click', () => setDirection(-1));
-    panelToggle.addEventListener('click', () => { setCollapsed(!panelBody.hidden); layoutChanged(); });
-    document.addEventListener('visibilitychange', syncAnimation);
-    window.addEventListener('resize', resize);
-    setCollapsed(window.innerWidth <= 600 || window.innerHeight < 500);
-    resize();
-    syncAnimation();
-    // Also respond to text wrapping, zoom and panel expansion without requiring
-    // a window resize. Reserve space for the full deletion target, not just its dot.
-    if (typeof ResizeObserver !== 'undefined') {
-      const layoutObserver = new ResizeObserver(layoutChanged);
-      overlays.forEach(element => layoutObserver.observe(element));
-    }
-  </script>
+  <header><div class="wrap"><a class="brand" href="/">maswany<span>.</span></a></div></header>
+  <main class="wrap">
+    <p class="eyebrow">A little corner of the web</p>
+    <h1>Projects &amp;<br>experiments.</h1>
+    <p class="intro">A collection of ideas, interactive experiments, and other things worth sharing.</p>
+    <section class="projects" aria-labelledby="projects-heading">
+      <h2 class="section-label" id="projects-heading">Explore</h2>
+      <a class="project" href="https://sheep.maswany.com/">
+        <h2>Baa Humbug</h2>
+        <p>Meet Bramble, a small sheep with big feelings.</p>
+        <span class="visit">Visit site</span>
+      </a>
+      <a class="project" href="https://vortex.maswany.com/">
+        <h2>Vortex Field</h2>
+        <p>An interactive study of vortices and flowing currents.</p>
+        <span class="visit">Visit site</span>
+      </a>
+    </section>
+  </main>
+  <footer><div class="wrap">maswany.com</div></footer>
 </body>
 </html>
