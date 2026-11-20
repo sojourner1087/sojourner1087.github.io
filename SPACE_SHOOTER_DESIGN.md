@@ -1,0 +1,94 @@
+# Dead Letter Orbit
+
+An arcade space shooter for desktop and mobile browsers
+
+The last postal skiff on the night route has eight relay stations to reach before dawn. Fly along the trailing edge of a convoy, fire up-screen through its derelict sorting drones, and catch the letters they still carry. Each falling envelope gives the pilot a choice. Intercept it high in the flight band to get back on target quickly, or hang back to see where the next volley lands. A clean run takes at most 4 minutes 48 seconds of game time.
+
+## Playfield and controls
+
+The playable area is a 360 × 640 logical-unit rectangle with its origin at the top left. The skiff starts centered at (180, 576). Its hull and collision circle fit within an 8-unit radius. Clamp its center to x = 8–352 and y = 520–632 after every movement step. This lets the hull touch either side and keeps it entirely within the bottom 20% (y = 512–640). A faint postal stripe at y = 512 marks the flight ceiling.
+
+| | Desktop | Mobile portrait |
+|---|---|---|
+| Steer | Arrow keys or WASD. Opposing keys cancel on each axis. Normalize diagonals. | Touch anywhere on the field to anchor a drag at the ship’s current position. Each logical unit dragged moves the target one unit on that axis. The skiff follows at the desktop speed limit. Clutch by lifting and touching down again. |
+| Fire | Tap or hold Space. A ready gun fires on the first held tick and every 10 ticks while held. Releasing preserves the cooldown. | Autofire throughout active play, including while the thumb is lifted. Use the same gun, cooldown and first-shot timing. |
+| Pause | Escape or the HUD pause button. | Tap the HUD pause button. Capture only the steering finger and ignore extra fingers on the field. |
+
+Both controls use a maximum speed of 240 units/s. Releasing or canceling the steering pointer stops movement and clears its target. A new touch starts from the current ship position, so resting a thumb to the side keeps the ship visible. Both modes shoot a single upward bolt at 480 units/s for one damage, up to six bolts per second.
+
+Fit the complete field uniformly inside the viewport after reserving a compact HUD row and the device safe-area insets. Center the field in any spare space. Scale the canvas backing buffer for pixel density and map pointer deltas through the displayed field scale. The HUD shows score, combo and time left on the combo, lives, station number and wave clock. Stack it into two rows on narrow screens. Keep pause and menu controls at least 44 CSS pixels square.
+
+While playing, size the game shell to the visible viewport, lock document overflow and overscroll, set the field’s `touch-action` to `none`, and consume the movement and Space keys while game input has focus. Restore normal scrolling and text input in menus and the initials form. Tab hiding, loss of window focus or orientation changes pause the simulation and clear held controls. Resume explicitly and re-anchor the next drag. Paused time advances neither the wave nor the weapon cooldown.
+
+## Gameplay / Logic
+
+Run the simulation at 60 fixed ticks/s. Each station has one timed wave. On a clear, remove remaining enemies, bolts, letters and hazards, award the clear bonus, and show the next station name for two seconds. The next wave starts with the ship centered and the gun ready. The third life lost ends the run immediately. Station 5 also has a boss deadline.
+
+### Flight schedule
+
+All speeds below are logical units/s. The bolt column gives the speed of hostile projectiles. Spawn intervals are per individual unless a pair is specified. Regular spawns start one interval into a phase and stop before its end. Hazard times are measured from wave start and mark the **start of the warning**. Enemy volleys and spawns are subject to the escape rules below.
+
+| Station | Wave duration | Enemy pattern and spawn rate | Hostile bolt speed | Hazard schedule and warnings | Advance or finish |
+|---|---:|---|---:|---|---|
+| 1 · Outbox | 24 s | One scout every 2 s, cycling through left, center and right columns. | 110 | Quiet opening. Each shooter flashes for 0.5 s. | Survive to 24 s. |
+| 2 · Loose Freight | 28 s | A pair of scouts every 3 s in neighboring columns. | 120 | One asteroid every 6 s. An arrow marks its track for 1.2 s. | Survive to 28 s. |
+| 3 · Side Door | 30 s | One scout every 2 s. One flanker every 6 s, alternating sides. | 135 | Flanker entry chevron for 0.8 s. One black hole at 13 s, with a 2 s ring warning. | Survive to 30 s. |
+| 4 · Lost Property | 32 s | One scout every 1.5 s. One flanker every 5 s from the side opposite the previous flanker. | 150 | Asteroid every 8 s with 1.2 s arrow. Black holes at 6 and 21 s with 2 s rings. Flanker chevron 0.8 s. | Survive to 32 s. |
+| 5 · Sorting Office | 20 s escort + up to 40 s boss | Scout pair every 3 s in escort. At 20 s clear escort traffic and admit one Sorting Engine. It alternates a three-bolt fan and a straight volley every 2 s. | 150 escort / 165 boss | Boss stamps its intended firing lanes on the field 1 s before each volley. | Destroy the boss by 60 s. A surviving boss closes the gate and ends the run. |
+| 6 · Dead Sun | 26 s | One scout every 2.5 s. Suspend shooters from each nova warning through its pulse and clear existing threats at warning onset. | 140 | Supernovas at 6 and 17 s. A hatched mask and countdown show the blast and its opening for 2.4 s. | Survive both pulses and reach 26 s. |
+| 7 · Crossed Wires | 34 s | One scout every 2 s, one alternating flanker every 5 s. | 160 | Asteroid every 6 s with 1.2 s arrow. Supernovas at 10 and 24 s with 2.4 s countdowns. Flanker chevron 0.8 s. | Survive to 34 s. |
+| 8 · Last Delivery | 40 s | Scout pair every 3 s, one alternating flanker every 4 s. | 175 | Black holes at 8 and 24 s, supernovas at 9 and 25 s, asteroids every 7 s. Keep the 2 s ring, 2.4 s countdown, 1.2 s arrow and 0.8 s chevron. | Survive to 40 s. Deliver the mail, award the final clear and end the run. |
+
+### Encounters and escape routes
+
+- **Scouts** have 1 HP. They descend at 72 units/s and fire once straight down at y = 220 after the muzzle flash. Start scouts at the upper edge in columns centered at x = 60, 180 and 300. **Flankers** have 2 HP. They enter at y = 180, cross at 100 units/s and fire once at mid-field toward the skiff’s position at the start of their 0.5 s muzzle flash. A locked shot travels in a straight line. Enemy bodies can hit the ship. Enemies that leave the field give no points.
+- **Asteroids** have 3 HP and a 14-unit radius. Each warning traces a seeded, slightly diagonal path from the top edge through the flight band. The rock follows that path at 128 units/s until destroyed or off-screen. **Black holes** project a hollow ring in the flight band. After the warning, its 36-unit-radius disk consumes bolts from either side and damages the ship on contact for 3 s. The ring marks the full lethal radius ahead of time. Ship handling stays constant near it.
+- **The Sorting Engine** has 30 HP. Its exposed red seal is the target. It moves between the three scout columns above y = 180, stops to stamp each warning, and fires along the stamped lines. The fan spreads at −20°, 0° and +20° from vertical. The straight volley uses three parallel lanes spaced 36 units apart. The sixth station opens as soon as the seal breaks.
+- **Supernovas** fill the field for 0.6 s except for one vertical opening at least 64 units wide. Hollow brackets mark both edges of the opening for the full warning and pulse. Add an optional three-note countdown. Hatching, brackets and numbers convey the full warning with audio muted and color removed.
+- **Keep a reachable route open.** Cap the field at six ordinary enemies, twelve hostile bolts and two warned or active environmental hazards, including asteroids in flight. Before accepting a warning, enemy body path or volley, project it alongside all committed threats through their exit or expiration. From the skiff’s actual position, reserve a continuous path inside the flight band through the overlap. Allow 0.25 s reaction time, cap travel at ship speed, and check swept collisions with the full hull plus 4 units of clearance. During a nova the path must reach the opening before ignition and stay clear for the entire pulse. A gap across the field that the skiff cannot reach in time fails the check.
+- Try alternate lanes in seeded order. If none passes, omit the candidate for that spawn slot. A later spawn must preserve the reserved route for its remaining duration. Reserve hazard slots in advance for scheduled novas, then black holes, then asteroids. An incoming asteroid can use a slot only if it will clear in time for the higher-priority warning. Choose the nova opening at warning onset and keep it fixed through the pulse. No catch-up spawns. Station 8 sets the maximum rates and speeds.
+
+### Score, lives and restarts
+
+| Event | Award and rule |
+|---|---|
+| Destroy a scout, flanker or asteroid | 100, 200 or 50 points respectively, times the current kill multiplier. Each target pays once. |
+| Chain kills | The first kill starts a chain. Another kill within 120 active ticks of the last extends it. Kills 1–3 score ×1, 4–6 score ×2, 7–9 score ×3, and 10 onward score ×4. Apply the new tier to the kill that earns it. A hit, expired window or station change resets the chain. |
+| Catch a letter | Every fourth scout destroyed within a station drops one envelope straight down at 100 units/s. Touch it for a flat 250. Missed letters leave at the bottom. Catching a letter leaves the combo clock alone. |
+| Deliveries | Destroying the boss awards a flat 2,000. Every station clear, including 5 and 8, awards a flat 500. |
+
+Start with three lives. Any damaging contact costs one life, even for simultaneous hits. With lives remaining, respawn on the same tick at (180, 576) with 2 s of invulnerability. Clear hostile bolts and allow movement and fire immediately. Keep wave time, boss HP and earned score. Resolve kills and catches, then player damage, then clearance and deadlines. A final-life loss takes precedence over a simultaneous clear. The boss can be defeated on the deadline tick.
+
+At the results screen show the end reason, station and score. **Fly again** starts at station 1 with a fresh run ID and seed, zero score, three lives and empty input history. Restarting from pause abandons the current run and follows the same reset. Only a terminal run can enter the leaderboard.
+
+## Firebase Leaderboard
+
+Firebase Hosting serves the browser game. Anyone can press **Play** without an account or sign-in screen. The repo’s Hosting configuration stages files in `firebase-public` through `scripts/stage-firebase.sh`. Its current deployment workflow targets the sheep site. For the game release, stage the game bundle and select a game Hosting target explicitly. Deploying Cloud Functions requires a Firebase project on the **Blaze** plan. The Functions emulator can run locally before enabling billing. [Firebase Hosting](https://firebase.google.com/docs/hosting) · [Functions deployment requirements](https://firebase.google.com/docs/functions/get-started)
+
+| Runs in | Responsibility |
+|---|---|
+| Browser | Map keyboard and touch to game inputs, run the local simulation, render the field and HUD, record inputs, and display the live top ten. Show the initials form only after the Function confirms provisional qualification. |
+| Shared simulation | A versioned module runs in both environments. It owns tick order, fixed-point movement, seeded random draws, spawn decisions, collisions, cooldowns, scoring and terminal conditions. Tie simultaneous kills by spawn ID. Rendering, screen dimensions, wall clocks and network latency have no effect on simulation output. |
+| Cloud Function | Issue and bind the run to its seed and rules version, validate and replay the input log, decide qualification, validate initials and finalize the result with the Firestore Admin SDK. |
+| Firestore | Keep run records private. Publish a single ordered snapshot at `leaderboards/top10` with at most ten rows containing only initials and score. Allow unauthenticated document gets on that exact path. Deny collection lists, all other client reads, and all direct client writes, including to the public snapshot. The Function uses its runtime identity and IAM for server access. [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/rules-conditions) |
+
+### From launch to initials
+
+1. **Start.** A public `startRun` call generates an unpredictable run ID, a random seed and a separate high-entropy bearer token. Store the token hash, seed, rules version, server start time, 30-minute expiry and open state in `runs/{runId}`. Return the ID, token, seed, version and expiry over HTTPS. The browser holds the token for finish and submit calls. If the service is unavailable at launch, offer a clearly labeled local practice run.
+2. **Record.** Each active tick consumes a signed integer x/y movement intent (−127 to 127 per axis, vector magnitude capped at 127) and a fire bit. Convert a drag target into the same bounded movement intent as the keyboard before simulation. Record the actual quantized values consumed, emitting a tick-indexed change only when a value changes. Pauses emit no ticks. Include the terminal tick so a long final stretch with unchanged input replays exactly.
+3. **Verify.** Send the run ID, token, terminal tick and input changes to `finishRun`. Check the token, expiry and run state. Require ordered, unique, in-range ticks, valid controls and at most one change per tick. Bound simulation to 17,280 ticks (274 s of waves plus seven 2 s transitions). Replay from the stored seed and version with the gun initially ready and controls neutral. Derive the score and end reason from the simulation. Reject a log that ends early, extends past the first terminal tick or exceeds elapsed server time by more than a one-second allowance.
+4. **Qualify.** Freeze the first successful verification and its input digest on the run using a conditional transaction. An identical retry returns the saved outcome. A different log cannot replace it. Compare the verified score with the current board. An empty place qualifies. On a full board the score must strictly exceed tenth place. Return the verified score and a provisional invitation if it qualifies. The browser then asks for **one to three initials**, with Submit and Skip. Skipping leaves the board untouched.
+5. **Submit once.** `submitInitials` checks the token, trims surrounding spaces, accepts only one to three ASCII letters and uppercases them. In one Firestore transaction, read the private run and the public board before writing. If already finalized, return the recorded outcome, even if the entry has since fallen off the board. Otherwise require an unexpired, verified invitation and recheck qualification against those exact rows. If displaced, finalize the run as outside the top ten and tell the player that the cutoff moved.
+6. **Rank and commit.** Insert a qualifying row in descending score order, **after all existing equal scores**, then trim to ten. Atomically write the new board and mark the private run accepted with its verified score, initials and a Firestore server timestamp. “Earlier” means the first successful acceptance transaction. Every accepted submission updates the same board document, so a concurrent transaction retries against the committed order. A repeated submission for one run can neither add another row nor change the initials. Show acceptance only after commit. A transient failure leaves the same request retryable. [Firestore transactions](https://firebase.google.com/docs/firestore/manage-data/transactions) · [Server timestamps](https://firebase.google.com/docs/firestore/manage-data/add-data#server_timestamp)
+
+## Before deployment
+
+| Exercise | Pass condition |
+|---|---|
+| Mobile portrait | On a small iPhone in Safari and an Android phone in Chrome, start without signing in. Drag from either side, lift, re-anchor, add a second finger and drag off the field. The ship tracks one thumb, stops on release, reaches both edges and stays entirely in the bottom fifth. Page scroll and pull-to-refresh stay inactive. HUD, warning brackets and pause remain visible with browser chrome expanded or collapsed. Rotate, resume, and open the initials keyboard without moving the ship. |
+| Desktop and firing parity | Exercise both key sets, opposite directions, diagonal movement, Space taps, held Space and focus loss. Count emitted shots over 600 uninterrupted active ticks starting ready. Held Space and mobile autofire must each emit exactly 60 at ticks 0, 10, …, 590 at 30, 60 and 120 rendered frames/s. Pausing or lifting the steering thumb must preserve cooldown. |
+| Progression and fairness | Step through every row with fixed seeds. Check spawn slots, muzzle flashes, speeds, warning lead times, boss defeat and timeout, all three lives, and the final delivery. Sweep at least 1,000 seeds through stations 4, 7 and 8 with starts at each corner of the flight band. Trace the reserved path tick by tick with a full-size ship and fire disabled. Assert survival on that path, full warning durations, entity caps and deterministic rejection of impossible combinations. |
+| Score and replay | Run the same seed and inputs in browser and Function. Compare per-station state, terminal tick and score. Cover a fourth kill exactly 120 ticks later, simultaneous final-life damage and a clear, a missed letter, a pause and a fresh restart. Reject an early finish, invalid tick, modified finalized replay and wrong token. |
+| Firestore access | With Hosting, Functions and Firestore connected to the Local Emulator Suite, verify a signed-out browser can get the public board. Attempt a collection list, private run read, direct board update and forged run creation. Each must be denied. Verify the Function can finalize a legitimate run. [Firebase emulator setup](https://firebase.google.com/docs/emulator-suite/install_and_configure) |
+| Concurrent submissions | Seed nine rows above 1,000 and a tenth at 900. Get invitations for two distinct 1,000-point runs, release both submissions together and resend each request. Only the first committed run takes tenth. Repeat with two vacancies to retain both ties in commit order. Race a 1,100 against a 1,000, retry after a lost response, and send different valid initials for the same run at once. Verify at most ten rows, the correct cutoff, one acceptance timestamp per accepted run and stable initials on retries. |
+| Release rehearsal | From the staged game bundle, complete a run and submit initials on the emulated Hosting origin. Verify the browser and Function load matching rules versions and inspect the selected Hosting target, Firestore rules file and Blaze project before production deployment. |
