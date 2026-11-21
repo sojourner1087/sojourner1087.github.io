@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "space-shooter-6f41c": {
+      "hosting": {
+        "space-shooter": [
+          "space-shooter-6f41c"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -1,0 +1,35 @@
+name: Deploy Dead Letter Orbit to Firebase Hosting
+
+on:
+  push:
+    branches: [space-shooter]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-space-shooter-6f41c
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test Dead Letter Orbit
+        run: node --test tests/simulation.test.mjs
+      - name: Select shooter Hosting config
+        run: cp firebase.game.json firebase.json
+      - name: Deploy shooter to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPACE_SHOOTER_6F41C }}
+          projectId: space-shooter-6f41c
+          target: space-shooter
+          channelId: live
+          firebaseToolsVersion: '15.37.0'
