@@ -74,19 +74,42 @@ function drawNova(ctx, e) {
   ctx.fillText(e.delay ? 'NOVA ' + (e.delay / 60).toFixed(1) : 'NOVA', e.x, 460);
 }
 
+function drawWell(ctx, e, tick) {
+  ctx.save();
+  if (e.delay) {
+    ctx.strokeStyle = '#c5aee485';
+    ctx.setLineDash([3, 7]);
+    for (const x of [e.x - e.radius, e.x + e.radius]) line(ctx, x, 0, x, 640);
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#dfc8ff';
+    ctx.beginPath();
+    ctx.moveTo(e.x - 6, 31);
+    ctx.lineTo(e.x, 38);
+    ctx.lineTo(e.x + 6, 31);
+    ctx.stroke();
+    ctx.fillStyle = '#dfc8ff';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 10px monospace';
+    ctx.fillText('BLACK HOLE', Math.max(37, Math.min(323, e.x)), 54);
+  } else {
+    ctx.fillStyle = '#080614';
+    ctx.strokeStyle = '#ad96d8';
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, e.radius - 6 - i * 6, e.radius - 12 - i * 6, tick / 70 + i, i, i + 3.8);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 function drawThreat(ctx, e, tick) {
   if (e.kind === 'nova') { drawNova(ctx, e); return; }
-  if (e.kind === 'well') {
-    ctx.strokeStyle = e.delay ? '#c5aee4' : '#ad96d8';
-    ctx.setLineDash(e.delay ? [3, 4] : []);
-    ctx.beginPath(); ctx.arc(e.x, e.y, 36, 0, Math.PI * 2);
-    ctx.fillStyle = e.delay ? '#8461ac20' : '#080614'; ctx.fill(); ctx.stroke();
-    ctx.setLineDash([]);
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath(); ctx.ellipse(e.x, e.y, 30 - i * 6, 24 - i * 6, tick / 70 + i, i, i + 3.8); ctx.stroke();
-    }
-    return;
-  }
+  if (e.kind === 'well') { drawWell(ctx, e, tick); return; }
   if (e.delay) {
     if (e.kind === 'flanker') {
       ctx.fillStyle = colors.v; ctx.font = 'bold 20px monospace';
@@ -144,6 +167,13 @@ export function draw(ctx, s, effects) {
     ctx.globalAlpha = Math.max(0,1-age/25);
     if (p.kind === 'letter') {
       ctx.font = 'bold 11px monospace';ctx.fillStyle = colors.m;ctx.fillText('+250',p.x,p.y-age*.5);
+    } else if (p.kind === 'rock-hit') {
+      ctx.globalAlpha = Math.max(0, 1 - age / 10);
+      ctx.fillStyle = colors.l;
+      ctx.fillRect(p.x - age, p.y + age * 0.4, 2, 2);
+      ctx.fillRect(p.x + age, p.y + age * 0.4, 2, 2);
+      ctx.fillStyle = colors.w;
+      ctx.fillRect(p.x, p.y - age, 2, 2);
     } else {
       for (let i=0;i<8;i++) {
         ctx.fillStyle = i%2 ? colors.l : colors.o;

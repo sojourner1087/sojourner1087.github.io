@@ -8,12 +8,17 @@ export const STATIONS = [
   { name: 'Sorting Office', seconds: 60, scout: 180, pair: true, speed: 150 },
   { name: 'Dead Sun', seconds: 26, scout: 150, speed: 140, novas: [6, 17] },
   { name: 'Crossed Wires', seconds: 34, scout: 120, flank: 300, speed: 160, rock: 360, novas: [10, 24] },
-  { name: 'Last Delivery', seconds: 40, scout: 180, pair: true, flank: 240, speed: 175, rock: 420, wells: [8, 24], novas: [9, 25] }
+  { name: 'Last Delivery', seconds: 40, scout: 180, pair: true, flank: 240, speed: 175, rock: 420, wells: [7, 23], novas: [9, 25] }
 ];
 
 const columns = [60, 180, 300];
 const lanes = [36, 84, 132, 180, 228, 276, 324];
 const environmental = new Set(['rock', 'well', 'nova']);
+const wellRadius = 36;
+const wellSpeed = 210 / 60;
+const wellTiming = { warning: 120, life: Math.ceil((FIELD.height + 2 * wellRadius) / wellSpeed) };
+const novaTiming = { warning: 144, life: 36 };
+const rockTiming = { warning: 72, life: 320 };
 const neutral = Object.freeze({ x: 0, y: 0, fire: false });
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 export const multiplier = chain => Math.min(4, 1 + Math.floor(Math.max(0, chain - 1) / 3));
@@ -69,19 +74,28 @@ function routeClear(route, threats, now, until = Infinity) {
   return true;
 }
 
-function admit(s, batch) {
-  if (s.route && s.route.until > s.tick && !routeClear(s.route, batch, s.tick, s.route.until)) return false;
-  const traffic = [...s.threats, ...batch];
+function preservesRoute(s, candidates) {
+  return !s.route || s.route.until <= s.tick || routeClear(s.route, candidates, s.tick, s.route.until);
+}
+
+function findRoute(s, traffic) {
   const destinations = [s.x, ...lanes.toSorted((a, b) => Math.abs(a - s.x) - Math.abs(b - s.x))];
   for (const to of destinations) {
     const route = { from: s.x, to, y: s.y, start: s.tick };
     if (!routeClear(route, traffic, s.tick)) continue;
     route.until = s.tick + Math.max(...traffic.map(e => e.delay + e.life - e.age));
-    s.route = route;
-    s.threats.push(...batch);
-    return true;
+    return route;
   }
-  return false;
+  return null;
+}
+
+function admit(s, batch) {
+  if (!preservesRoute(s, batch)) return false;
+  const route = findRoute(s, [...s.threats, ...batch]);
+  if (!route) return false;
+  s.route = route;
+  s.threats.push(...batch);
+  return true;
 }
 
 function hazards(s, station) {
@@ -99,22 +113,25 @@ function hazards(s, station) {
   // Reserve future simultaneous warning/active slots before admitting a rock.
   if (rock && !(nova || well)) {
     const warnings = [
-      ...(station.wells || []).map(t => [60 * t, 60 * t + 300]),
-      ...(station.novas || []).map(t => [60 * t, 60 * t + 180]),
+      ...(station.wells || []).map(t => [60 * t, 60 * t + wellTiming.warning + wellTiming.life]),
+      ...(station.novas || []).map(t => [60 * t, 60 * t + novaTiming.warning + novaTiming.life]),
       ...active.filter(e => e.kind === 'rock').map(e => [s.wave, s.wave + e.delay + e.life - e.age])
     ];
-    if (warnings.some(([t]) => t >= s.wave && t < s.wave + 400 &&
+    if (warnings.some(([t]) => t >= s.wave && t < s.wave + rockTiming.warning + rockTiming.life &&
         warnings.filter(([a, b]) => a <= t && t < b).length >= 2)) return;
   }
   const first = roll(s, lanes.length);
   for (let i = 0; i < lanes.length; i++) {
     const x = lanes[(first + i) % lanes.length];
     let candidate;
-    if (nova) candidate = { ...body('nova', x, 0, 0, 0, 0, 36, 144), gap: 76 };
-    else if (well) candidate = body('well', x, 576, 0, 0, 36, 180, 120);
-    else {
+    if (nova) {
+      candidate = { ...body('nova', x, 0, 0, 0, 0, novaTiming.life, novaTiming.warning), gap: 76 };
+    } else if (well) {
+      candidate = body('well', x, -wellRadius, 0, wellSpeed, wellRadius, wellTiming.life, wellTiming.warning);
+    } else {
       const vx = (x < 180 ? 1 : -1) * 0.18;
-      candidate = body('rock', x, -16, vx, Math.sqrt((128 / 60) ** 2 - vx ** 2), 14, 320, 72, 3);
+      candidate = body('rock', x, -16, vx, Math.sqrt((128 / 60) ** 2 - vx ** 2),
+        14, rockTiming.life, rockTiming.warning, 3);
     }
     if (admit(s, [candidate])) return;
   }
@@ -198,15 +215,30 @@ function scoreKill(s, e) {
   if (e.kind === 'scout' && ++s.scouts % 4 === 0) s.letters.push({ x: e.x, y: e.y });
 }
 
+function deflectRock(s, rock, shot) {
+  s.events.push({ kind: 'rock-hit', x: shot.x, y: shot.y });
+  const offset = clamp((rock.x - shot.x) / rock.radius, -1, 1);
+  const vx = clamp(rock.vx + offset * 0.34, -0.6, 0.6);
+  if (vx === rock.vx) return;
+  const candidate = { ...rock, vx };
+  if (!preservesRoute(s, [candidate])) return;
+  const traffic = s.threats.filter(e => !e.gone).map(e => e === rock ? candidate : e);
+  const route = findRoute(s, traffic);
+  if (!route) return;
+  rock.vx = vx;
+  s.route = route;
+}
+
 function collide(s) {
   const wells = s.threats.filter(e => e.kind === 'well' && !e.delay);
   for (const shot of s.shots) {
     shot.y -= 8;
-    if (wells.some(e => touching(shot, e, 36))) { shot.used = true; continue; }
+    if (wells.some(e => touching(shot, e, e.radius))) { shot.used = true; continue; }
     const target = s.threats.find(e => e.hp > 0 && !e.delay && touching(shot, e, e.radius + 3));
     if (target) {
       shot.used = true;
       if (--target.hp === 0) { target.gone = true; scoreKill(s, target); }
+      else if (target.kind === 'rock') deflectRock(s, target, shot);
     } else if (s.boss?.hp > 0 && touching(shot, s.boss, 22)) {
       shot.used = true;
       if (--s.boss.hp === 0) {
@@ -227,7 +259,7 @@ function collide(s) {
     if (e.gone) return false;
     if (e.kind !== 'bolt') return true;
     if (!e.age && e.shooter?.gone) return false;
-    return e.delay || !wells.some(w => touching(w, e, 36));
+    return e.delay || !wells.some(w => touching(w, e, w.radius));
   });
   const hit = s.threats.some(e => !e.delay && (e.kind === 'nova'
     ? Math.abs(s.x - e.x) + FIELD.radius > e.gap / 2

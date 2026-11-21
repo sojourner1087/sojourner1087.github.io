@@ -123,6 +123,7 @@ function animate(time) {
       else {
         effects.push({ ...event, tick: run.tick });
         if (event.kind === 'letter') tone(620,.16,'triangle',960);
+        else if (event.kind === 'rock-hit') tone(380,.055,'triangle',190);
         else tone(event.kind === 'hit' ? 170 : 240,.12,'sawtooth',55);
       }
     }
@@ -205,6 +206,7 @@ id('manual-open').addEventListener('click', () => {
   if (duringFlight) stopFlight();
   showPanel('manual','Flight manual','<p><strong>Flight controls</strong><br>' + desktopHelp + ' ' + touchHelp +
     '</p><p><strong>Make the delivery</strong><br>Stay in the bottom flight band. Shoot drones, catch falling letters for 250 points, and chain kills within two seconds to build your multiplier.</p>' +
+    '<p>Steer clear of black holes as they drift down the marked lane. Clip an asteroid from the side to nudge it off course.</p>' +
     '<p>Three lives cover eight stations. Break the Sorting Engine’s seal at station 5. During a supernova, fly between the marked brackets.</p>' +
     '<p>Practice scores are saved on this device.</p>',[[duringFlight ? 'Resume flight' : 'Back to hangar', duringFlight ? fly : closePanel]]);
 });

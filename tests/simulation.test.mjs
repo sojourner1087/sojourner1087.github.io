@@ -102,14 +102,81 @@ test('seeded stages keep stable results and entity caps', () => {
   assert.deepEqual(first, second);
 });
 
+test('a black hole is telegraphed from above, absorbs passing bolts and exits at the bottom', () => {
+  const run = newRun(123);
+  run.station = 2; run.wave = 13 * 60 - 1;
+  step(run);
+  const well = run.threats.find(e => e.kind === 'well');
+  assert(well);
+  assert.equal(well.y, -well.radius);
+  ticks(run, 119);
+  assert.equal(well.delay, 0);
+  assert.equal(well.y, -well.radius);
+  ticks(run, 30);
+  assert.equal(well.y, 69);
+  run.shots.push({ x: well.x, y: well.y + well.vy + 8 });
+  const hostileBolt = { kind: 'bolt', x: well.x, y: well.y + well.vy, radius: 3,
+    vx: 0, vy: 0, delay: 0, age: 1, life: 100 };
+  run.threats.push(hostileBolt);
+  step(run);
+  assert.equal(run.shots.length, 0);
+  assert(!run.threats.includes(hostileBolt));
+
+  run.x = well.x < 180 ? 352 : 8;
+  ticks(run, well.life - well.age);
+  assert(well.y - well.radius >= FIELD.height);
+  assert(!run.threats.includes(well));
+  assert.equal(run.lives, 3);
+});
+
+function rockImpact(run, rock, offset) {
+  run.shots.push({ x: rock.x + rock.vx + offset, y: rock.y + rock.vy + 8 });
+  step(run);
+}
+
+test('a laser damages an asteroid and nudges it away from the side struck', () => {
+  for (const offset of [-12, 0, 12]) {
+    const run = newRun(123);
+    run.x = 352;
+    const rock = { kind: 'rock', x: 150, y: 250, radius: 14,
+      vx: 0.18, vy: 2.12, delay: 0, age: 0, life: 200, hp: 3 };
+    run.threats.push(rock);
+    rockImpact(run, rock, offset);
+    assert.equal(rock.hp, 2);
+    assert.equal(rock.vy, 2.12);
+    assert.equal(Math.sign(rock.vx - 0.18), Math.sign(0 - offset));
+    assert(Math.abs(rock.vx) <= 0.6);
+    const x = rock.x;
+    step(run);
+    assert.equal(rock.x, x + rock.vx);
+
+    rockImpact(run, rock, offset);
+    rockImpact(run, rock, offset);
+    assert(!run.threats.includes(rock));
+    assert.equal(run.score, 50);
+  }
+});
+
+test('an asteroid hit still deals damage when deflection would cross a reserved escape route', () => {
+  const run = newRun(123);
+  run.route = { start: 0, from: 180, to: 180, y: 576, until: 150 };
+  const rock = { kind: 'rock', x: 145, y: 390, radius: 14,
+    vx: 0, vy: 2, delay: 0, age: 0, life: 160, hp: 3 };
+  run.threats.push(rock);
+  rockImpact(run, rock, -14);
+  assert.equal(rock.hp, 2);
+  assert.equal(rock.vx, 0);
+  assert.equal(run.events[0].kind, 'rock-hit');
+});
+
 test('an overlapping black hole and supernova leave a shared reachable opening', () => {
   for (let seed = 1; seed <= 30; seed++) {
     const run = newRun(seed);
-    run.station = 7; run.wave = 479;
+    run.station = 7; run.wave = 7 * 60 - 1;
     step(run);
     const well = run.threats.find(e => e.kind === 'well');
     assert(well);
-    ticks(run, 60);
+    ticks(run, 120);
     const nova = run.threats.find(e => e.kind === 'nova');
     assert(nova);
     assert.equal(nova.delay, 143);
@@ -117,7 +184,14 @@ test('an overlapping black hole and supernova leave a shared reachable opening',
     assert(Math.abs(target - nova.x) + FIELD.radius <= nova.gap / 2);
     assert(Math.abs(target - well.x) > well.radius + FIELD.radius);
     ticks(run, 15);
-    for (let i = 0; i < 300; i++) step(run, movement((target - run.x)/4, 0, false));
+    let passedDuringPulse = false;
+    for (let i = 0; i < 300; i++) {
+      step(run, movement((target - run.x) / 4, 0, false));
+      if (!nova.delay && nova.age < nova.life && Math.abs(well.y - run.y) <= well.radius) {
+        passedDuringPulse = true;
+      }
+    }
+    assert(passedDuringPulse);
     assert.equal(run.lives, 3);
   }
 });
